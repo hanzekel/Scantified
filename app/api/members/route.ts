@@ -17,8 +17,9 @@ export async function GET() {
     });
 
     const membersWithQrImage = await Promise.all(
-      members.map(async (member) => {
+      members.map(async (member: (typeof members)[number]) => {
         const qrImage = await QRCode.toDataURL(member.qrCode);
+
         return {
           ...member,
           qrImage,
@@ -56,6 +57,7 @@ export async function POST(req: Request) {
         ministry,
         role,
         qrCode,
+        isActive: true,
       },
     });
 

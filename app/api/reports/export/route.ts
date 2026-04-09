@@ -14,7 +14,7 @@ export async function GET() {
       },
     });
 
-    const rows = records.map((record) => ({
+    const rows = records.map((record: (typeof records)[number]) => ({
       "Member Name": record.member.fullName,
       Ministry: record.member.ministry,
       Role: record.member.role,

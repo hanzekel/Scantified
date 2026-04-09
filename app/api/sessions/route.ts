@@ -53,7 +53,7 @@ export async function POST(req: Request) {
 
     if (activeMembers.length > 0) {
       await prisma.attendanceRecord.createMany({
-        data: activeMembers.map((member) => ({
+        data: activeMembers.map((member: (typeof activeMembers)[number]) => ({
           sessionId: session.id,
           memberId: member.id,
           status: "Absent",
@@ -61,6 +61,7 @@ export async function POST(req: Request) {
         })),
       });
     }
+
     await updateInactiveMembersForMinistry(ministry);
 
     return NextResponse.json(session, { status: 201 });

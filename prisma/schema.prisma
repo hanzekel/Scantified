@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Member {
+  id         Int                @id @default(autoincrement())
+  fullName   String
+  ministry   String
+  role       String
+  qrCode     String             @unique
+  isActive   Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  records    AttendanceRecord[]
+}
+
+model AttendanceSession {
+  id             Int                @id @default(autoincrement())
+  title          String
+  attendanceDate DateTime
+  attendanceType String
+  ministry       String
+  createdAt      DateTime           @default(now())
+  records        AttendanceRecord[]
+}
+
+model AttendanceRecord {
+  id         Int               @id @default(autoincrement())
+  sessionId  Int
+  memberId   Int
+  status     String
+  timeIn     DateTime?
+  createdAt  DateTime          @default(now())
+
+  session    AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member     Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, memberId])
+}

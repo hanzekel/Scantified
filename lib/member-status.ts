@@ -30,8 +30,10 @@ export async function updateInactiveMembersForMinistry(ministry: string) {
     });
 
     const hasThreeSundayRecords = latestSundayRecords.length === 3;
+
     const allAbsent = latestSundayRecords.every(
-      (record) => record.status === "Absent"
+      (record: (typeof latestSundayRecords)[number]) =>
+        record.status === "Absent"
     );
 
     const shouldBeInactive = hasThreeSundayRecords && allAbsent;

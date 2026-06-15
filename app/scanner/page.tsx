@@ -109,133 +109,149 @@ function ScannerContent() {
   }, [sessionId]);
 
   return (
-    <main className="app-shell">
+    <main className="app-shell min-h-screen bg-[#6345ED] selection:bg-[#E5FF2A] selection:text-black">
       <AppNavbar />
 
-      <section className="section-container relative z-10 py-10 text-white">
-        <div className="mb-8 flex flex-col gap-4 rounded-[28px] border border-white/20 bg-white/10 p-5 backdrop-blur-md md:flex-row md:items-center md:justify-between">
+      <section className="mx-auto max-w-7xl px-6 py-10">
+        
+        {/* Page Header Banner */}
+        <div className="mb-8 flex flex-col gap-6 border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/75">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#6345ED]">
               Ministry QR Attendance
             </p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-tight">
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-black">
               QR Attendance Scanner
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/85">
+            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-600">
               Scan a member QR code to record attendance for the selected
               session.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Link href="/sessions" className="secondary-button">
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              href="/sessions"
+              className="border-2 border-black bg-white px-6 py-2.5 text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+            >
               ← Back
             </Link>
 
-            <Link href="/" className="primary-button">
+            <Link
+              href="/"
+              className="border-2 border-black bg-[#E5FF2A] px-6 py-2.5 text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+            >
               Exit to Home
             </Link>
           </div>
         </div>
 
         {!sessionId ? (
-          <div className="glass-card rounded-[28px] p-8">
-            <div className="rounded-[24px] border border-white/15 bg-white/10 p-6">
-              <p className="text-lg font-bold text-white">No session selected.</p>
-              <p className="mt-2 text-sm text-white/80">
-                Please go back to the Sessions page and open a scanner from a
-                specific attendance session.
-              </p>
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-black bg-slate-50 p-12 text-center shadow-inner">
+            <p className="text-xl font-black text-black">No session selected</p>
+            <p className="mt-2 text-sm font-medium text-slate-600 max-w-md">
+              Please go back to the Sessions page and open a scanner directly from a
+              specific attendance session.
+            </p>
 
-              <div className="mt-5">
-                <Link href="/sessions" className="primary-button">
-                  Go to Sessions
-                </Link>
-              </div>
+            <div className="mt-6">
+              <Link
+                href="/sessions"
+                className="border-2 border-black bg-[#E5FF2A] px-8 py-3.5 text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] inline-block"
+              >
+                Go to Sessions
+              </Link>
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <section className="glass-card rounded-[28px] p-6">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_360px]">
+            
+            {/* Left Column: Camera Scanner */}
+            <section className="h-fit border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <div className="mb-6 flex flex-col gap-4 border-b-2 border-black pb-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/75">
+                  <p className="text-sm font-bold uppercase tracking-widest text-slate-500">
                     Live Scanner
                   </p>
-                  <h2 className="mt-2 text-2xl font-extrabold text-white">
+                  <h2 className="mt-1 text-2xl font-black text-black">
                     Scan ministry QR codes
                   </h2>
                 </div>
 
-                <div className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
+                <div className="flex h-fit items-center whitespace-nowrap border-2 border-black bg-[#E5FF2A] px-4 py-2 text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                   Session ID: {sessionId}
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-white/15 bg-white/10 p-4">
+              {/* QR Reader Wrapper */}
+              <div className="border-4 border-black bg-slate-100 p-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                 <div
                   id="qr-reader"
-                  className="overflow-hidden rounded-2xl [&>div]:border-0 [&_video]:rounded-2xl [&_video]:object-cover"
+                  className="overflow-hidden bg-black [&>div]:border-0 [&_video]:object-cover"
                 />
               </div>
 
-              <div className="mt-5 rounded-2xl border border-white/15 bg-white/10 p-4 text-sm text-white/85">
-                <p className="font-semibold text-white">Scanner tips</p>
-                <ul className="mt-2 space-y-1 text-white/75">
-                  <li>• Brighten the phone that shows the QR code.</li>
-                  <li>• Hold the QR straight and avoid screen glare.</li>
-                  <li>• Keep the QR inside the square guide.</li>
-                  <li>• Move a little closer if the QR looks small.</li>
-                  <li>• Use the rear camera for better focus.</li>
+              <div className="mt-8 border-2 border-black bg-slate-50 p-5 shadow-inner">
+                <p className="font-black text-black uppercase tracking-widest text-sm">Scanner tips</p>
+                <ul className="mt-3 space-y-2 text-sm font-medium text-slate-600">
+                  <li className="flex items-center gap-2"><span className="text-black font-bold">►</span> Brighten the phone that shows the QR code.</li>
+                  <li className="flex items-center gap-2"><span className="text-black font-bold">►</span> Hold the QR straight and avoid screen glare.</li>
+                  <li className="flex items-center gap-2"><span className="text-black font-bold">►</span> Keep the QR inside the square guide.</li>
+                  <li className="flex items-center gap-2"><span className="text-black font-bold">►</span> Move a little closer if the QR looks small.</li>
                 </ul>
               </div>
             </section>
 
-            <aside className="space-y-6">
-              <section className="glass-card rounded-[28px] p-6">
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/75">
-                  Scan Status
-                </p>
-                <h2 className="mt-2 text-2xl font-extrabold text-white">
-                  Current Result
-                </h2>
+            {/* Right Column: Scan Result & Actions */}
+            <aside className="space-y-8">
+              
+              {/* Scan Status Card */}
+              <section className="border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <div className="border-b-2 border-black pb-4 mb-6">
+                  <p className="text-sm font-bold uppercase tracking-widest text-slate-500">
+                    Scan Status
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-black">
+                    Current Result
+                  </h2>
+                </div>
 
-                <div className="mt-5">
+                <div>
                   {!cameraReady && !result ? (
-                    <div className="rounded-3xl border border-white/15 bg-white/10 p-8 text-center">
-                      <p className="text-sm text-white/75">
+                    <div className="border-2 border-dashed border-black bg-slate-100 p-8 text-center shadow-inner">
+                      <p className="text-sm font-bold text-slate-500 animate-pulse uppercase tracking-widest">
                         Starting camera...
                       </p>
                     </div>
                   ) : !result ? (
-                    <div className="rounded-3xl border border-white/15 bg-white/10 p-8 text-center">
-                      <p className="text-sm text-white/75">
+                    <div className="border-2 border-dashed border-black bg-slate-100 p-8 text-center shadow-inner">
+                      <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">
                         Waiting for QR scan...
                       </p>
                     </div>
                   ) : result.error ? (
-                    <div className="rounded-3xl border border-red-300/30 bg-red-500/15 p-6">
-                      <p className="text-lg font-bold text-white">
-                        {result.error}
+                    <div className="border-4 border-black bg-[#FF4A4A] p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="text-lg font-black text-white uppercase tracking-wide border-b-2 border-white/30 pb-3 mb-3">
+                        ⚠️ {result.error}
                       </p>
 
                       {result.member && (
-                        <div className="mt-4 space-y-1 text-sm text-white/85">
-                          <p className="font-semibold">{result.member.fullName}</p>
-                          <p>{result.member.role}</p>
-                          <p>{result.member.ministry}</p>
+                        <div className="space-y-1 text-sm font-bold text-white">
+                          <p className="text-xl">{result.member.fullName}</p>
+                          <p className="text-white/90">{result.member.role}</p>
+                          <p className="text-white/90">{result.member.ministry}</p>
                         </div>
                       )}
                     </div>
                   ) : (
-                    <div className="rounded-3xl border border-emerald-300/30 bg-emerald-500/15 p-6">
-                      <p className="text-lg font-bold text-white">
-                        {result.message}
+                    <div className="border-4 border-black bg-[#4ADE80] p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                      <p className="text-lg font-black text-black uppercase tracking-wide border-b-2 border-black/20 pb-3 mb-3">
+                        ✓ {result.message}
                       </p>
 
                       {result.member && (
-                        <div className="mt-4 space-y-1 text-sm text-white/85">
-                          <p className="font-semibold">{result.member.fullName}</p>
+                        <div className="space-y-1 text-sm font-bold text-black/80">
+                          <p className="text-xl text-black">{result.member.fullName}</p>
                           <p>{result.member.role}</p>
                           <p>{result.member.ministry}</p>
                         </div>
@@ -245,24 +261,36 @@ function ScannerContent() {
                 </div>
               </section>
 
-              <section className="glass-card rounded-[28px] p-6">
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-white/75">
-                  Navigation
-                </p>
-                <h2 className="mt-2 text-2xl font-extrabold text-white">
-                  Quick Actions
-                </h2>
+              {/* Navigation Card */}
+              <section className="border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <div className="border-b-2 border-black pb-4 mb-6">
+                  <p className="text-sm font-bold uppercase tracking-widest text-slate-500">
+                    Navigation
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-black">
+                    Quick Actions
+                  </h2>
+                </div>
 
-                <div className="mt-5 flex flex-col gap-3">
-                  <Link href="/sessions" className="primary-button justify-center">
+                <div className="flex flex-col gap-4">
+                  <Link
+                    href="/sessions"
+                    className="w-full border-2 border-black bg-[#E5FF2A] px-6 py-3.5 text-center text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] block"
+                  >
                     Back to Sessions
                   </Link>
 
-                  <Link href="/members" className="secondary-button justify-center">
+                  <Link
+                    href="/members"
+                    className="w-full border-2 border-black bg-white px-6 py-3.5 text-center text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] block"
+                  >
                     View Members
                   </Link>
 
-                  <Link href="/" className="secondary-button justify-center">
+                  <Link
+                    href="/"
+                    className="w-full border-2 border-black bg-white px-6 py-3.5 text-center text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] block"
+                  >
                     Exit to Home
                   </Link>
                 </div>
@@ -279,11 +307,13 @@ export default function ScannerPage() {
   return (
     <Suspense
       fallback={
-        <main className="app-shell">
+        <main className="app-shell min-h-screen bg-[#6345ED] selection:bg-[#E5FF2A] selection:text-black">
           <AppNavbar />
-          <section className="section-container relative z-10 py-10 text-white">
-            <div className="glass-card rounded-[28px] p-8 text-center">
-              <p className="text-lg font-semibold text-white">Loading scanner...</p>
+          <section className="mx-auto max-w-7xl px-6 py-10">
+            <div className="border-2 border-black bg-white p-12 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <p className="text-xl font-black text-black animate-pulse uppercase tracking-widest">
+                Loading scanner...
+              </p>
             </div>
           </section>
         </main>

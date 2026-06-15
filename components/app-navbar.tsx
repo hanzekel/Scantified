@@ -18,21 +18,24 @@ export default function AppNavbar() {
   return (
     <header className="relative z-20">
       <div className="section-container py-6">
-        <div className="glass-nav flex items-center justify-between rounded-full px-5 py-4">
-          <Link href="/" className="flex items-center gap-3 text-white">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-lg font-extrabold">
+        {/* Brutalist Container - White with lowered opacity & blur */}
+        <div className="flex items-center justify-between border-2 border-black bg-white/90 px-5 py-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] backdrop-blur-sm">
+          
+          <Link href="/" className="flex items-center gap-3 text-black">
+            {/* Brutalist Logo Icon */}
+            <div className="flex h-11 w-11 items-center justify-center border-2 border-black bg-[#6345ED] text-lg font-extrabold text-white shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
               ✝
             </div>
 
             <div className="leading-tight">
-              <p className="text-xs font-bold uppercase tracking-[0.32em] text-white/70">
+              <p className="text-xs font-bold uppercase tracking-[0.32em] text-slate-600">
                 Ministry
               </p>
-              <p className="text-xl font-extrabold">QR Attendance</p>
+              <p className="text-xl font-black tracking-tight">QR Attendance</p>
             </div>
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex">
+          <nav className="hidden items-center gap-2 md:flex">
             {links.map((link) => {
               const active = pathname === link.href;
 
@@ -40,9 +43,13 @@ export default function AppNavbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`nav-link ${
-                    active ? "underline underline-offset-8" : ""
-                  }`}
+                  className={`border-2 px-4 py-2 text-sm font-bold text-black transition-all 
+                    ${
+                      active
+                        ? "border-black bg-[#E5FF2A] shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] -translate-x-[2px] -translate-y-[2px]"
+                        : "border-transparent bg-transparent hover:border-black hover:bg-[#E5FF2A] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-x-[2px] hover:-translate-y-[2px]"
+                    }
+                  `}
                 >
                   {link.label}
                 </Link>

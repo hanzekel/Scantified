@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "app/api/members/route.ts"  ],
+, "app/api/members/route.ts", "prisma.config.ts.bak", "lib/member-status"  ],
   "exclude": ["node_modules"]
 }

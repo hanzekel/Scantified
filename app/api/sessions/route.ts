@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { updateInactiveMembersForMinistry } from "@/lib/member-status";
 import { z } from "zod";
 
-// 1. Define strict schema for incoming session data
+// Strict validation schema for incoming session data
 const sessionSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   attendanceDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     
-    // 2. Validate body against the schema (Throws ZodError if invalid)
+    // Validate body against the schema
     const validatedData = sessionSchema.parse(body);
     const { title, attendanceDate, attendanceType, ministry } = validatedData;
 
@@ -73,10 +73,11 @@ export async function POST(req: Request) {
 
     return NextResponse.json(session, { status: 201 });
   } catch (error) {
-    // 3. Catch Zod validation errors safely and return to the client
+    // Catch Zod validation errors safely and explicitly type cast for build-time safety
     if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: zodError.errors[0].message },
         { status: 400 }
       );
     }

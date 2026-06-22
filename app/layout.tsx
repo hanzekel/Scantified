@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
+import AppNavbar from "@/components/app-navbar"; 
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Ministry QR Attendance System",
-  description: "QR-based attendance system for church ministries",
+  title: "DYD26 | Command Center",
+  description: "QR Attendance System for DYD26",
 };
 
 export default function RootLayout({
@@ -19,7 +17,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${montserrat.variable} antialiased`}>
+      <body className={inter.className}>
+        <AppNavbar /> 
         {children}
       </body>
     </html>

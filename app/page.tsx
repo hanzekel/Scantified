@@ -1,127 +1,148 @@
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import AppNavbar from "@/components/app-navbar";
-import PageTransition from "@/components/page-transition";
+"use client";
 
-export default async function Home() {
-  const memberCount = await prisma.member.count();
-  const sessionCount = await prisma.attendanceSession.count();
-  const recordCount = await prisma.attendanceRecord.count();
+import { useState, useEffect } from "react";
+import Link from "next/link";
+
+type EventSession = {
+  id: number;
+  title: string;
+  eventDay: number;
+  sessionType: string;
+  date: string;
+};
+
+export default function Dashboard() {
+  const [sessions, setSessions] = useState<EventSession[]>([]);
+  const [title, setTitle] = useState("");
+  const [eventDay, setEventDay] = useState("1");
+  const [sessionType, setSessionType] = useState("Plenary");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchSessions();
+  }, []);
+
+  async function fetchSessions() {
+    const res = await fetch("/api/sessions");
+    if (res.ok) setSessions(await res.json());
+  }
+
+  async function handleCreateSession(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, eventDay: parseInt(eventDay), sessionType }),
+      });
+      if (res.ok) {
+        setTitle("");
+        fetchSessions();
+      } else {
+        const data = await res.json();
+        alert(data.error);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <PageTransition>
-      {/* Added inline background color to force the violet theme. 
-        You may need to update globals.css if .app-shell overrides this. 
-      */}
-      <main className="app-shell min-h-screen bg-[#6345ED] font-sans text-white selection:bg-[#E5FF2A] selection:text-black">
-        <AppNavbar />
-
-        <section className="mx-auto max-w-7xl px-6 py-12 md:py-24">
-          <div className="grid items-center gap-16 lg:grid-cols-2">
-            
-            {/* Left Column: Typography & Buttons */}
-            <div className="max-w-xl text-left">
-              <p className="mb-4 text-sm font-bold uppercase tracking-widest text-[#E5FF2A]">
-                QR-based Attendance System
-              </p>
-
-              <h1 className="mb-6 text-5xl font-bold leading-[1.1] tracking-tight sm:text-6xl md:text-7xl">
-                SCANTIFIED
-              </h1>
-
-              <p className="mb-6 text-lg leading-relaxed text-white/90">
-                Track choir and altar server attendance with a responsive,
-                beautiful, and easy-to-use web application built for church
-                ministries.
-              </p>
-
-              <p className="mb-10 text-xl font-semibold text-white">
-                Simple attendance. Clear records. Better ministry coordination.
-              </p>
-
-              {/* Scaled-down, properly proportioned buttons */}
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  href="/members"
-                  className="border-2 border-black bg-[#E5FF2A] px-8 py-3.5 text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  Open Members
-                </Link>
-
-                <Link
-                  href="/sessions"
-                  className="border-2 border-black bg-white px-8 py-3.5 text-sm font-bold text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  Create Session
-                </Link>
-              </div>
-            </div>
-
-            {/* Right Column: Brutalist Stat Cards */}
-            <div className="mx-auto w-full max-w-lg space-y-6 lg:ml-auto">
-              
-              {/* Members Card */}
-              <div className="border-2 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                <p className="mb-2 text-sm font-bold uppercase tracking-wider text-slate-500">
-                  Members
-                </p>
-                <h2 className="text-5xl font-black text-black">{memberCount}</h2>
-                <p className="mt-2 text-sm font-medium text-slate-600">
-                  Registered choir and altar server members
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-6">
-                {/* Sessions Card */}
-                <div className="border-2 border-black bg-white p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Sessions
-                  </p>
-                  <h2 className="text-4xl font-black text-black">{sessionCount}</h2>
-                  <p className="mt-2 text-xs font-medium text-slate-600">
-                    Attendance sessions
-                  </p>
-                </div>
-
-                {/* Logs Card */}
-                <div className="border-2 border-black bg-white p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
-                  <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    Logs
-                  </p>
-                  <h2 className="text-4xl font-black text-black">{recordCount}</h2>
-                  <p className="mt-2 text-xs font-medium text-slate-600">
-                    Records stored
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom Tags Section - Redesigned to match the theme */}
-          <div className="mt-20 border-t border-white/20 pt-10">
-            <p className="mb-6 text-center text-sm font-bold uppercase tracking-widest text-[#E5FF2A]">
-              Designed for
+    <main className="min-h-screen bg-slate-50 p-6 font-sans selection:bg-[#E5FF2A] selection:text-black md:p-12">
+      <div className="mx-auto max-w-5xl">
+        
+        <header className="mb-10 flex items-end justify-between border-b-4 border-black pb-6">
+          <div>
+            <h1 className="text-4xl font-black uppercase tracking-tight text-black md:text-5xl">
+              DYD26 Command
+            </h1>
+            <p className="mt-2 text-lg font-bold text-[#FF4A4A]">
+              Event Session Management
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              {[
-                "Choir Ministry",
-                "Altar Servers",
-                "Sunday Attendance",
-                "Friday Attendance",
-                "QR Scanning",
-                "Monthly Reports",
-              ].map((tag) => (
-                <span
-                  key={tag}
-                  className="border-2 border-black bg-white px-4 py-2 text-sm font-bold text-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  {tag}
-                </span>
+          </div>
+          <Link href="/register" className="hidden border-4 border-black bg-white px-6 py-3 font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-x-1 hover:-translate-y-1 md:block">
+            View Public Registration ↗
+          </Link>
+        </header>
+
+        <div className="mb-12 border-4 border-black bg-[#E5FF2A] p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="mb-6 text-2xl font-black uppercase text-black">Create New Session</h2>
+          <form onSubmit={handleCreateSession} className="grid gap-4 md:grid-cols-4 md:items-end">
+            <div className="md:col-span-2">
+              <label className="mb-2 block font-bold text-black">Session Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Morning Plenary, Camp Wars"
+                className="w-full border-2 border-black bg-white p-3 font-bold outline-none transition-transform focus:-translate-x-1 focus:-translate-y-1 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block font-bold text-black">Event Day</label>
+              <select
+                value={eventDay}
+                onChange={(e) => setEventDay(e.target.value)}
+                className="w-full border-2 border-black bg-white p-3 font-bold outline-none transition-transform focus:-translate-x-1 focus:-translate-y-1 focus:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+              >
+                <option value="1">Day 1</option>
+                <option value="2">Day 2</option>
+                <option value="3">Day 3</option>
+              </select>
+            </div>
+            <div>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full border-2 border-black bg-[#6345ED] p-3 font-black uppercase text-white transition-transform hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50"
+              >
+                {isSubmitting ? "Opening..." : "Open Session"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div>
+          <h2 className="mb-6 text-2xl font-black uppercase text-black">Active Sessions</h2>
+          {sessions.length === 0 ? (
+            <div className="border-4 border-dashed border-black p-12 text-center font-bold text-slate-500">
+              No sessions created yet.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2">
+              {sessions.map((session) => (
+                <div key={session.id} className="flex flex-col justify-between border-4 border-black bg-white p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="border-2 border-black bg-black px-2 py-1 text-xs font-black uppercase text-white">
+                        Day {session.eventDay}
+                      </span>
+                      <span className="border-2 border-black bg-[#4ADE80] px-2 py-1 text-xs font-black uppercase text-black">
+                        {session.sessionType}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-black uppercase text-black">{session.title}</h3>
+                    <p className="mt-2 text-sm font-bold text-slate-500">
+                      Opened: {new Date(session.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/scanner?sessionId=${session.id}`}
+                    className="mt-6 block w-full border-2 border-black bg-black p-3 text-center font-black uppercase text-white transition-transform hover:-translate-x-1 hover:-translate-y-1 hover:bg-[#6345ED] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                  >
+                    Launch Scanner →
+                  </Link>
+                </div>
               ))}
             </div>
-          </div>
-        </section>
-      </main>
-    </PageTransition>
+          )}
+        </div>
+
+      </div>
+    </main>
   );
 }

@@ -1,15 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { updateInactiveMembersForMinistry } from "@/lib/member-status";
+import { z } from "zod";
+
+// Updated schema to match the new EventSession model
+const sessionSchema = z.object({
+  title: z.string().min(1, "Title is required").max(100),
+  eventDay: z.number().int().min(1).max(3),
+  sessionType: z.string().min(1, "Session type is required"),
+});
 
 export async function GET() {
   try {
-    const sessions = await prisma.attendanceSession.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
+    const sessions = await prisma.eventSession.findMany({
+      orderBy: { createdAt: "desc" },
     });
-
     return NextResponse.json(sessions);
   } catch (error) {
     console.error("GET /api/sessions error:", error);
@@ -23,49 +27,32 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { title, attendanceDate, attendanceType, ministry } = body;
+    
+    // Validate body
+    const { title, eventDay, sessionType } = sessionSchema.parse(body);
 
-    if (!title || !attendanceDate || !attendanceType || !ministry) {
+    const session = await prisma.eventSession.create({
+      data: {
+        title,
+        eventDay,
+        sessionType,
+      },
+    });
+
+    // ⚡ SPARSE TRACKING IMPLEMENTED ⚡
+    // We do NOT create "Absent" records here anymore.
+    // The database remains perfectly quiet until a camper actually scans their QR code.
+
+    return NextResponse.json(session, { status: 201 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const zodError = error as z.ZodError;
       return NextResponse.json(
-        { error: "All fields are required" },
+        { error: zodError.issues[0].message },
         { status: 400 }
       );
     }
 
-    const session = await prisma.attendanceSession.create({
-      data: {
-        title,
-        attendanceDate: new Date(attendanceDate),
-        attendanceType,
-        ministry,
-      },
-    });
-
-    const activeMembers = await prisma.member.findMany({
-      where: {
-        ministry,
-        isActive: true,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (activeMembers.length > 0) {
-      await prisma.attendanceRecord.createMany({
-        data: activeMembers.map((member: (typeof activeMembers)[number]) => ({
-          sessionId: session.id,
-          memberId: member.id,
-          status: "Absent",
-          timeIn: null,
-        })),
-      });
-    }
-
-    await updateInactiveMembersForMinistry(ministry);
-
-    return NextResponse.json(session, { status: 201 });
-  } catch (error) {
     console.error("POST /api/sessions error:", error);
     return NextResponse.json(
       { error: "Failed to create session" },

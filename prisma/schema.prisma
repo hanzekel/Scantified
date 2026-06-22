@@ -3,42 +3,54 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
+// 1. New Camp Model (Replaces hardcoded 'ministry' strings)
+model Camp {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique // e.g., "Camp San Pedro", "Camp San Pablo"
+  colorCode String? // Optional: Store a hex code for Neo-brutalist UI tags
+  members   Member[]
+  createdAt DateTime @default(now())
+}
+
+// 2. Updated Member Model
 model Member {
-  id         Int                @id @default(autoincrement())
-  fullName   String
-  ministry   String
-  role       String
-  qrCode     String             @unique
-  isActive   Boolean            @default(true)
-  createdAt  DateTime           @default(now())
-  records    AttendanceRecord[]
+  id        Int                @id @default(autoincrement())
+  fullName  String
+  campId    Int
+  camp      Camp               @relation(fields: [campId], references: [id], onDelete: Cascade)
+  role      String             @default("Camper") // Camper, Coordinator, Core Team
+  qrCode    String             @unique
+  isActive  Boolean            @default(true)
+  records   AttendanceRecord[]
+  createdAt DateTime           @default(now())
 }
 
-model AttendanceSession {
-  id             Int                @id @default(autoincrement())
-  title          String
-  attendanceDate DateTime
-  attendanceType String
-  ministry       String
-  createdAt      DateTime           @default(now())
-  records        AttendanceRecord[]
+// 3. New EventSession Model (Replaces AttendanceSession)
+model EventSession {
+  id          Int                @id @default(autoincrement())
+  title       String // e.g., "Day 1 - Morning Plenary", "Day 2 - Camp Wars"
+  eventDay    Int // 1, 2, or 3
+  sessionType String // e.g., "Plenary", "Camp Activity"
+  date        DateTime           @default(now())
+  records     AttendanceRecord[]
+  createdAt   DateTime           @default(now())
 }
 
+// 4. Updated AttendanceRecord (Sparse Tracking)
 model AttendanceRecord {
-  id         Int               @id @default(autoincrement())
-  sessionId  Int
-  memberId   Int
-  status     String
-  timeIn     DateTime?
-  createdAt  DateTime          @default(now())
+  id        Int      @id @default(autoincrement())
+  sessionId Int
+  memberId  Int
+  timeIn    DateTime @default(now())
 
-  session    AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  member     Member            @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  session EventSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  member  Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
+  // Critical: A member can only be scanned once per session
   @@unique([sessionId, memberId])
 }

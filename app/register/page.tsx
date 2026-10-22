@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import QRCode from "qrcode";
+import { QrCode, ArrowLeft, Download, CheckCircle2, UserPlus, Heart, Sparkles } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
-// Define the shape of our Camp data
 type Camp = {
   id: number;
   name: string;
@@ -12,15 +12,13 @@ type Camp = {
 };
 
 export default function PublicRegistration() {
+  const toast = useToast();
   const [fullName, setFullName] = useState("");
   const [campId, setCampId] = useState("");
   const [camps, setCamps] = useState<Camp[]>([]);
   const [loading, setLoading] = useState(false);
-  
-  // This state holds the generated QR image once registration is successful
   const [generatedQr, setGeneratedQr] = useState<string | null>(null);
 
-  // Fetch the camps when the page loads so the user can select one
   useEffect(() => {
     async function fetchCamps() {
       try {
@@ -45,149 +43,158 @@ export default function PublicRegistration() {
         body: JSON.stringify({ 
           fullName, 
           campId: parseInt(campId, 10), 
-          role: "Camper" // Default role for public registration
+          role: "Camper"
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.error || "Failed to register. Please try again.");
+        toast.error(data.error || "Failed to register. Please try again.");
         setLoading(false);
         return;
       }
 
-      // Registration successful! Set the QR image to display it.
       setGeneratedQr(data.qrImage);
+      toast.success("Registration complete! Please save your pass.");
     } catch (error) {
       console.error("Registration error:", error);
-      alert("Something went wrong. Please check your connection.");
+      toast.error("Network error during registration");
     } finally {
       setLoading(false);
     }
   }
 
-  // Helper function so users can easily save the QR to their phone
   function handleDownload() {
     if (!generatedQr) return;
     const link = document.createElement("a");
     link.href = generatedQr;
-    link.download = `DYD26-QR-${fullName.replace(/\s+/g, "-")}.png`;
+    link.download = `Scantified-Pass-${fullName.replace(/\s+/g, "-")}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }
 
   return (
-    <main className="min-h-screen bg-[#6345ED] selection:bg-[#E5FF2A] selection:text-black flex flex-col items-center justify-center p-6">
+    <main className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 font-sans">
       
-      {/* DYD Header */}
-      <div className="w-full max-w-md text-center mb-8">
-        <h1 className="text-4xl font-black text-white tracking-tight drop-shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-          DYD26
+      {/* Brand Header */}
+      <div className="w-full max-w-md text-center mb-6">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 mb-2 text-xs font-semibold text-amber-800 hover:text-amber-950 hover:-translate-x-0.5 active:scale-95 transition-all"
+        >
+          <ArrowLeft size={13} /> Return to Home
+        </Link>
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
+          Community Sign-Up
         </h1>
-        <p className="mt-2 text-sm font-bold uppercase tracking-widest text-[#E5FF2A]">
-          Camper Registration
+        <p className="mt-1 text-xs font-medium text-slate-500">
+          Register to receive your digital attendance pass. Save it on your phone to check in.
         </p>
       </div>
 
       {/* Main Registration Card */}
-      <div className="w-full max-w-md border-4 border-black bg-white p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div className="relative w-full max-w-md rounded-3xl border border-amber-200/70 bg-white/95 p-6 sm:p-8 shadow-xl shadow-amber-950/5 backdrop-blur-md overflow-hidden">
         
         {/* State 1: The Form */}
         {!generatedQr ? (
           <>
-            <div className="mb-6 border-b-2 border-black pb-4 text-center">
-              <h2 className="text-2xl font-black text-black">Join your Camp</h2>
-              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
-                Register to generate your personal DYD26 Event ID. You will need this QR code to enter sessions.
+            <div className="mb-6 border-b border-amber-100 pb-4 text-center">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/15 text-amber-800 border border-amber-200">
+                <Heart size={22} className="text-amber-600 fill-amber-500/40" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900">Sign Up for the Event</h2>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                Enter your name and group below to get your personal QR pass.
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-bold text-black">
-                  Full Name
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Your Full Name
                 </label>
                 <input
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full border-2 border-black bg-white p-3.5 text-black placeholder:text-slate-400 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] outline-none transition-all focus:-translate-x-[2px] focus:-translate-y-[2px] focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
-                  placeholder="Juan Dela Cruz"
+                  className="w-full rounded-2xl border border-amber-200/80 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-900 shadow-sm transition-all focus:border-amber-600 focus:shadow-md"
+                  placeholder="e.g. Juan Dela Cruz"
                   required
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-bold text-black">
-                  Select Camp
+                <label className="mb-1.5 block text-xs font-semibold text-slate-700">
+                  Select Your Camp or Group
                 </label>
-                <div className="relative">
-                  <select
-                    value={campId}
-                    onChange={(e) => setCampId(e.target.value)}
-                    className="w-full appearance-none border-2 border-black bg-white p-3.5 pr-10 text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] outline-none transition-all focus:-translate-x-[2px] focus:-translate-y-[2px] focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
-                    required
-                  >
-                    <option value="" disabled>Choose your camp...</option>
-                    {camps.map((camp) => (
-                      <option key={camp.id} value={camp.id}>
-                        {camp.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center border-l-2 border-black bg-slate-100 px-4 text-black">
-                    ▼
-                  </div>
-                </div>
+                <select
+                  value={campId}
+                  onChange={(e) => setCampId(e.target.value)}
+                  className="w-full rounded-2xl border border-amber-200/80 bg-white px-3.5 py-2.5 text-xs font-medium text-slate-900 shadow-sm transition-all focus:border-amber-600"
+                  required
+                >
+                  <option value="" disabled>Choose your group...</option>
+                  {camps.map((camp) => (
+                    <option key={camp.id} value={camp.id}>
+                      {camp.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <button
                 type="submit"
                 disabled={loading || !campId}
-                className="mt-6 w-full border-2 border-black bg-[#E5FF2A] px-6 py-4 text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-6 w-full rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 py-3.5 text-xs font-semibold text-white shadow-md shadow-amber-700/20 hover:from-amber-700 hover:to-amber-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all disabled:opacity-50"
               >
-                {loading ? "Generating ID..." : "Register Now"}
+                {loading ? "Creating Pass..." : "Complete Sign-Up & Download Pass"}
               </button>
             </form>
           </>
         ) : (
           /* State 2: Success & QR Code Display */
-          <div className="text-center animate-in fade-in zoom-in duration-300">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-4 border-black bg-[#4ADE80] text-3xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-              ✓
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-600 border border-emerald-200">
+              <CheckCircle2 size={32} strokeWidth={2.4} />
             </div>
-            <h2 className="text-2xl font-black text-black">Registration Complete!</h2>
-            <p className="mt-2 text-sm font-bold text-[#FF4A4A] border-b-2 border-black pb-4">
-              CRITICAL: Save this QR code. You need it for attendance!
+            
+            <h2 className="text-2xl font-bold text-slate-900">You&apos;re All Set!</h2>
+            <p className="mt-1 text-xs font-medium text-amber-800 bg-amber-50 rounded-full px-3 py-1 inline-block border border-amber-200/80">
+              Take a screenshot or save this image to your phone
             </p>
 
-            <div className="mt-6 border-4 border-black bg-slate-50 p-4 shadow-inner inline-block">
+            <div className="mt-6 rounded-2xl border border-amber-200 bg-white p-4 shadow-sm inline-block">
               <img
                 src={generatedQr}
                 alt={`QR Code for ${fullName}`}
-                className="h-48 w-48 object-contain mx-auto"
+                className="h-48 w-48 object-contain mx-auto rounded-xl"
               />
             </div>
             
-            <p className="mt-4 text-xl font-black text-black uppercase">{fullName}</p>
-            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-              {camps.find(c => c.id.toString() === campId)?.name}
+            <p className="mt-4 text-lg font-bold text-slate-900">{fullName}</p>
+            <p className="text-xs font-semibold text-amber-800">
+              {camps.find((c) => c.id.toString() === campId)?.name}
             </p>
 
             <button
               onClick={handleDownload}
-              className="mt-8 w-full border-2 border-black bg-[#E5FF2A] px-6 py-4 text-sm font-black uppercase tracking-widest text-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:-translate-x-[2px] hover:-translate-y-[2px] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 py-3 text-xs font-semibold text-white shadow-md shadow-amber-700/20 hover:from-amber-700 hover:to-amber-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all"
             >
-              ↓ Download Image
+              <Download size={14} />
+              <span>Save Image to Phone</span>
             </button>
 
             <button
-               onClick={() => window.location.reload()}
-               className="mt-4 w-full text-xs font-bold text-slate-500 underline underline-offset-4 hover:text-black"
+              onClick={() => {
+                setGeneratedQr(null);
+                setFullName("");
+                setCampId("");
+              }}
+              className="mt-4 w-full text-xs font-medium text-slate-500 hover:text-slate-800 hover:-translate-y-0.5 active:scale-95 transition-all"
             >
-              Register another camper
+              Sign up another person
             </button>
           </div>
         )}

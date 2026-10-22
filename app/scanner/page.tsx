@@ -4,13 +4,15 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { QrCode, ArrowLeft, RefreshCw, CheckCircle2, AlertCircle, CloudUpload, ShieldCheck } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 type QueuedScan = { qrCode: string; sessionId: number; timestamp: number };
 
-// 1. We move the main logic into a child component
 function ScannerContent() {
   const searchParams = useSearchParams();
   const sessionId = parseInt(searchParams.get("sessionId") || "0", 10);
+  const toast = useToast();
 
   const [lastScan, setLastScan] = useState<{ name: string; camp: string; msg: string; type: "success" | "error" | "offline" } | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -45,7 +47,7 @@ function ScannerContent() {
         setIsScanning(false);
       }, 2000);
     }, (error) => {
-      // Ignore background read errors
+      // Ignore background scan frame noises
     });
 
     return () => {
@@ -65,8 +67,10 @@ function ScannerContent() {
 
       if (res.ok) {
         setLastScan({ name: data.member.name, camp: data.member.camp, msg: data.message, type: "success" });
+        toast.success(`Verified: ${data.member.name}`);
       } else {
-        setLastScan({ name: "Unknown", camp: "---", msg: data.error, type: "error" });
+        setLastScan({ name: "Unknown Pass", camp: "---", msg: data.error, type: "error" });
+        toast.error(data.error || "Verification failed");
       }
     } catch (error) {
       queueOfflineScan(qrCode);
@@ -79,6 +83,7 @@ function ScannerContent() {
     setOfflineQueue(updatedQueue);
     localStorage.setItem("dyd26_offline_scans", JSON.stringify(updatedQueue));
     setLastScan({ name: "Queued Offline", camp: "Sync Later", msg: "Network failed. Scan saved to device.", type: "offline" });
+    toast.info("Saved scan locally (offline mode)");
   }
 
   async function handleSync() {
@@ -106,15 +111,25 @@ function ScannerContent() {
     setOfflineQueue(remaining);
     localStorage.setItem("dyd26_offline_scans", JSON.stringify(remaining));
     setIsSyncing(false);
+    toast.success("Offline queue synced!");
   }
 
   if (!sessionId) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6 text-center">
-        <div className="border-4 border-black bg-white p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <h2 className="text-2xl font-black uppercase">No Session Selected</h2>
-          <Link href="/" className="mt-4 inline-block border-2 border-black bg-[#E5FF2A] px-6 py-3 font-bold uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            Return to Dashboard
+      <div className="flex min-h-screen items-center justify-center p-6 text-center font-sans">
+        <div className="w-full max-w-sm rounded-3xl border border-amber-200/70 bg-white/95 p-8 shadow-xl">
+          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700">
+            <QrCode size={28} />
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-slate-900">No Gathering Selected</h2>
+          <p className="mt-1 text-xs text-slate-500 mb-6">
+            Please select a session gathering to activate the camera scanner.
+          </p>
+          <Link
+            href="/"
+            className="rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 px-6 py-3 text-xs font-semibold text-white shadow-md shadow-amber-700/20 hover:from-amber-700 hover:to-amber-800 transition-colors inline-block"
+          >
+            Return to Gatherings
           </Link>
         </div>
       </div>
@@ -122,40 +137,67 @@ function ScannerContent() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50 p-4 font-sans selection:bg-[#E5FF2A] selection:text-black md:p-8">
-      <div className="mx-auto w-full max-w-2xl">
-        <header className="mb-6 flex items-center justify-between border-b-4 border-black pb-4">
-          <h1 className="text-3xl font-black uppercase tracking-tight text-black">Scanner</h1>
-          <Link href="/" className="font-bold underline underline-offset-4 hover:text-[#6345ED]">
+    <div className="flex min-h-screen flex-col p-4 font-sans md:p-8">
+      <div className="mx-auto w-full max-w-xl">
+        <header className="mb-6 flex items-center justify-between rounded-3xl border border-amber-200/60 bg-white/85 p-4 sm:p-5 shadow-sm backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <Link
+              href={`/sessions/${sessionId}/dashboard`}
+              className="rounded-xl border border-amber-200/80 bg-amber-50/50 p-2 text-amber-950 hover:bg-amber-100/60 transition-colors"
+            >
+              <ArrowLeft size={16} />
+            </Link>
+            <div>
+              <h1 className="font-serif text-xl font-bold text-slate-900">Coordinator Scanner</h1>
+              <p className="text-[11px] text-slate-500 font-medium">Session #{sessionId}</p>
+            </div>
+          </div>
+          <Link
+            href="/"
+            className="text-xs font-semibold text-amber-800 hover:text-amber-950 transition-colors"
+          >
             Cancel
           </Link>
         </header>
 
         {offlineQueue.length > 0 && (
-          <div className="mb-6 flex items-center justify-between border-4 border-black bg-[#FF4A4A] p-4 text-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-            <span className="font-bold">{offlineQueue.length} Scans Queued Offline</span>
+          <div className="mb-6 flex items-center justify-between rounded-2xl border border-amber-300 bg-amber-50/90 p-4 text-amber-900 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              <CloudUpload size={16} className="text-amber-700" />
+              <span>{offlineQueue.length} scans queued locally</span>
+            </div>
             <button 
               onClick={handleSync} 
               disabled={isSyncing}
-              className="border-2 border-white bg-black px-4 py-2 text-sm font-black uppercase transition-transform hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] disabled:opacity-50"
+              className="rounded-xl bg-amber-800 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-amber-900 transition-colors disabled:opacity-50"
             >
               {isSyncing ? "Syncing..." : "Sync Now"}
             </button>
           </div>
         )}
 
-        <div className={`overflow-hidden border-4 border-black bg-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300 ${isScanning ? "opacity-50" : "opacity-100"}`}>
+        <div className={`overflow-hidden rounded-3xl border border-amber-200/70 bg-black shadow-xl transition-opacity duration-300 ${isScanning ? "opacity-50" : "opacity-100"}`}>
           <div id="reader" className="w-full bg-black text-white" />
         </div>
 
         {lastScan && (
-          <div className={`mt-8 border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] text-center animate-in slide-in-from-bottom-4 ${
-            lastScan.type === "success" ? "bg-[#4ADE80]" : 
-            lastScan.type === "offline" ? "bg-[#E5FF2A]" : "bg-[#FF4A4A] text-white"
+          <div className={`mt-6 rounded-3xl border p-6 text-center shadow-lg transition-all ${
+            lastScan.type === "success" 
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950" 
+              : lastScan.type === "offline" 
+              ? "border-amber-200 bg-amber-50 text-amber-950" 
+              : "border-rose-200 bg-rose-50 text-rose-950"
           }`}>
-            <h2 className="text-3xl font-black uppercase tracking-tight">{lastScan.name}</h2>
-            <p className="mt-1 text-lg font-bold uppercase">{lastScan.camp}</p>
-            <div className="mt-4 inline-block border-2 border-current bg-black/10 px-4 py-2 font-bold uppercase tracking-widest">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm">
+              {lastScan.type === "success" ? (
+                <CheckCircle2 size={20} className="text-emerald-600" />
+              ) : (
+                <AlertCircle size={20} className="text-rose-600" />
+              )}
+            </div>
+            <h2 className="font-serif text-xl font-bold tracking-tight">{lastScan.name}</h2>
+            <p className="text-xs font-medium opacity-80">{lastScan.camp}</p>
+            <div className="mt-3 inline-block rounded-full bg-white/70 px-3 py-1 text-xs font-semibold shadow-sm">
               {lastScan.msg}
             </div>
           </div>
@@ -165,12 +207,11 @@ function ScannerContent() {
   );
 }
 
-// 2. We wrap the export in the required Suspense boundary
 export default function ScannerPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 text-center">
-        <h2 className="text-2xl font-black uppercase animate-pulse">Loading Scanner...</h2>
+      <div className="flex min-h-screen items-center justify-center text-center font-sans">
+        <h2 className="font-serif text-xl font-bold text-slate-800 animate-pulse">Connecting Camera...</h2>
       </div>
     }>
       <ScannerContent />

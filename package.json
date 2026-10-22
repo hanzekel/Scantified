@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx tests/scheduling.test.ts && tsx tests/tokens.test.ts && tsx tests/checkin.test.ts && tsx tests/guest-offline.test.ts && tsx tests/overrides.test.ts && tsx tests/analytics.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

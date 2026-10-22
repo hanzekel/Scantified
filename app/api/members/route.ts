@@ -1,17 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import QRCode from "qrcode";
 import { z } from "zod";
+import QRCode from "qrcode";
 
-// Updated schema to use campId instead of ministry
+// Updated schema to match the new Member model
 const memberSchema = z.object({
-  fullName: z.string().min(2, "Full name is required").max(100),
-  campId: z.number().int().positive("Camp selection is required"),
-  role: z.string().default("Camper"),
+  fullName: z.string().min(1, "Full name is required").max(100),
+  campId: z.number().int().positive("Camp is required"),
+  role: z.enum(["Camper", "Coordinator", "Core Team", "Guest"]).default("Camper"),
 });
 
-function generateQrCodeValue(name: string) {
-  const cleanName = name.trim().toUpperCase().replace(/\s+/g, "-");
+// Helper function to generate a readable, random QR code string
+function generateQrCodeValue(name: string): string {
+  const cleanName = name.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 4);
   const randomPart = Math.floor(1000 + Math.random() * 9000);
   return `DYD26-${cleanName}-${randomPart}`;
 }
@@ -19,13 +20,13 @@ function generateQrCodeValue(name: string) {
 export async function GET() {
   try {
     const members = await prisma.member.findMany({
-      include: { camp: true }, // Pull the relational Camp data
+      include: { camp: true },
       orderBy: { createdAt: "desc" },
     });
 
     const membersWithQrImage = await Promise.all(
       members.map(async (member: (typeof members)[number]) => {
-        const qrImage = await QRCode.toDataURL(member.qrCode);
+        const qrImage = member.qrCode ? await QRCode.toDataURL(member.qrCode) : null;
         return {
           ...member,
           qrImage,
@@ -60,10 +61,10 @@ export async function POST(req: Request) {
         qrCode,
         isActive: true,
       },
-      include: { camp: true } // Return the camp data with the newly created member
+      include: { camp: true },
     });
 
-    const qrImage = await QRCode.toDataURL(newMember.qrCode);
+    const qrImage = newMember.qrCode ? await QRCode.toDataURL(newMember.qrCode) : null;
 
     return NextResponse.json(
       {
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
     if (error instanceof z.ZodError) {
       const zodError = error as z.ZodError;
       return NextResponse.json(
-        { error: zodError.issues[0].message },
+        { error: zodError.issues[0]?.message || "Validation error" },
         { status: 400 }
       );
     }

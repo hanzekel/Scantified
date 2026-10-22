@@ -52,6 +52,7 @@ export default function SessionPresenterPage() {
   const [isRotating, setIsRotating] = useState(false);
   const [showLockDialog, setShowLockDialog] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
+  const [theaterMode, setTheaterMode] = useState(false);
 
   // Live digital clock
   useEffect(() => {
@@ -185,53 +186,77 @@ export default function SessionPresenterPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-col justify-between p-4 sm:p-6 md:p-8 overflow-hidden font-sans">
-      {/* Top Header Bar */}
-      <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200/60 bg-white/85 px-6 py-4 shadow-sm backdrop-blur-md">
-        <div className="flex items-center gap-4">
-          <Link
-            href={`/sessions/${sessionId}/dashboard`}
-            className="flex items-center gap-1.5 rounded-xl border border-amber-200/80 bg-amber-50/50 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100/60 hover:-translate-y-0.5 active:scale-95 transition-all"
-          >
-            <ArrowLeft size={14} /> Back to List
-          </Link>
-          <div>
-            <span className="block text-[11px] font-semibold text-amber-800 uppercase tracking-widest flex items-center gap-1.5">
-              <span>{tokenData?.session.eventTitle || "Church Gathering"}</span>
-              <span className="h-1 w-1 rounded-full bg-amber-500" />
-              <span className="text-amber-700/80">Check-In Active</span>
-            </span>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-              {tokenData?.session.title || "Loading Session..."}
-            </h1>
-          </div>
-        </div>
-
-        {/* Live Controls & Digital Clock */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-2xl border border-amber-200/60 bg-white px-4 py-2 font-mono text-sm font-semibold text-slate-800 shadow-sm">
-            <Clock size={16} className="text-amber-600" />
-            <span>{currentTime}</span>
-          </div>
-
+    <main className="relative flex min-h-screen flex-col justify-between p-4 sm:p-6 md:p-8 overflow-hidden font-sans bg-[#FDFBF7]">
+      
+      {/* Floating Exit Theater Button if Theater Mode is Active */}
+      {theaterMode ? (
+        <div className="fixed top-4 right-4 z-50">
           <button
-            onClick={toggleFullscreen}
-            className="rounded-2xl border border-amber-200/60 bg-white p-2.5 text-slate-700 hover:bg-amber-50 hover:-translate-y-0.5 active:scale-95 transition-all shadow-sm"
-            title="Toggle Fullscreen"
-            aria-label="Toggle Fullscreen"
+            onClick={() => setTheaterMode(false)}
+            className="flex items-center gap-1.5 rounded-2xl border border-amber-200/80 bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-slate-800 shadow-md backdrop-blur-md hover:bg-white hover:-translate-y-0.5 active:scale-95 transition-all"
           >
-            {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
-          </button>
-
-          <button
-            onClick={() => setShowLockDialog(true)}
-            className="flex items-center gap-1.5 rounded-2xl border border-rose-200 bg-rose-50/80 px-3.5 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:-translate-y-0.5 active:scale-95 transition-all"
-            title="End check-in for this service"
-          >
-            <Lock size={14} /> Close Attendance
+            <span>Exit Theater Mode</span>
+            <Minimize size={13} />
           </button>
         </div>
-      </header>
+      ) : (
+        /* Standard Header Bar */
+        <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200/60 bg-white/85 px-6 py-4 shadow-sm backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/sessions/${sessionId}/dashboard`}
+              className="flex items-center gap-1.5 rounded-xl border border-amber-200/80 bg-amber-50/50 px-3 py-1.5 text-xs font-semibold text-amber-950 hover:bg-amber-100/60 hover:-translate-y-0.5 active:scale-95 transition-all"
+            >
+              <ArrowLeft size={14} /> Back to List
+            </Link>
+            <div>
+              <span className="block text-[11px] font-semibold text-amber-800 uppercase tracking-widest flex items-center gap-1.5">
+                <span>{tokenData?.session.eventTitle || "Church Gathering"}</span>
+                <span className="h-1 w-1 rounded-full bg-amber-500" />
+                <span className="text-amber-700/80">Check-In Active</span>
+              </span>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
+                {tokenData?.session.title || "Loading Session..."}
+              </h1>
+            </div>
+          </div>
+
+          {/* Live Controls & Digital Clock */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 rounded-2xl border border-amber-200/60 bg-white px-3.5 py-2 font-mono text-xs font-semibold text-slate-800 shadow-sm">
+              <Clock size={15} className="text-amber-600" />
+              <span>{currentTime}</span>
+            </div>
+
+            <button
+              onClick={() => setTheaterMode(true)}
+              className="flex items-center gap-1.5 rounded-2xl border border-amber-300/80 bg-amber-500/10 px-3.5 py-2 text-xs font-semibold text-amber-900 hover:bg-amber-500/20 hover:-translate-y-0.5 active:scale-95 transition-all shadow-sm"
+              title="Hide all controls for projector"
+            >
+              <Sparkles size={14} className="text-amber-600" />
+              <span className="hidden sm:inline">Theater View</span>
+            </button>
+
+            <button
+              onClick={toggleFullscreen}
+              className="rounded-2xl border border-amber-200/60 bg-white p-2 text-slate-700 hover:bg-amber-50 hover:-translate-y-0.5 active:scale-95 transition-all shadow-sm"
+              title="Toggle Fullscreen"
+              aria-label="Toggle Fullscreen"
+            >
+              {isFullscreen ? <Minimize size={17} /> : <Maximize size={17} />}
+            </button>
+
+            <button
+              onClick={() => setShowLockDialog(true)}
+              className="flex items-center gap-1.5 rounded-2xl border border-rose-200 bg-rose-50/80 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 hover:-translate-y-0.5 active:scale-95 transition-all"
+              title="End check-in for this service"
+            >
+              <Lock size={13} />
+              <span className="hidden sm:inline">Close Attendance</span>
+            </button>
+          </div>
+        </header>
+      )}
 
       {/* Main Center Presenter Stage with Radiant Golden Halo */}
       <div className="relative my-auto flex flex-col items-center justify-center py-6 text-center">
@@ -311,17 +336,19 @@ export default function SessionPresenterPage() {
       </div>
 
       {/* Bottom Live Headcount & Recent Arrival Ticker Bar */}
-      <footer className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200/60 bg-white/85 p-4 shadow-sm backdrop-blur-md">
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex items-center gap-3 rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-white px-5 py-2.5 shadow-sm">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-800">
-              <Users className="h-5 w-5" strokeWidth={2.4} />
+      <footer className={`flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-amber-200/60 bg-white/85 p-4 shadow-sm backdrop-blur-md transition-all ${
+        theaterMode ? "max-w-2xl mx-auto w-full justify-center bg-white/90" : ""
+      }`}>
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <div className="flex items-center gap-3 rounded-2xl border border-amber-200/60 bg-gradient-to-br from-amber-50 to-white px-5 py-2 shadow-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/15 text-amber-800">
+              <Users className="h-4 w-4" strokeWidth={2.4} />
             </div>
             <div>
-              <span className="block text-[10px] font-semibold text-amber-800 uppercase tracking-wider">
-                People Checked In Right Now
+              <span className="block text-[9px] font-semibold text-amber-800 uppercase tracking-wider">
+                Checked In
               </span>
-              <span className="text-2xl font-bold tracking-tight text-slate-900">
+              <span className="text-xl font-bold tracking-tight text-slate-900">
                 {tokenData?.session.attendeeCount || 0}
               </span>
             </div>
@@ -331,9 +358,9 @@ export default function SessionPresenterPage() {
           {tokenData?.session.recentAttendees && tokenData.session.recentAttendees.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                Just Checked In:
+                Just Arrived:
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 <AnimatePresence>
                   {tokenData.session.recentAttendees.map((name, i) => (
                     <motion.div
@@ -353,15 +380,17 @@ export default function SessionPresenterPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => fetchToken(false)}
-            disabled={isRotating}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 shadow-sm"
-          >
-            <RefreshCw size={12} className={isRotating ? "animate-spin" : ""} /> Refresh Code
-          </button>
-        </div>
+        {!theaterMode && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => fetchToken(false)}
+              disabled={isRotating}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50 shadow-sm"
+            >
+              <RefreshCw size={12} className={isRotating ? "animate-spin" : ""} /> Refresh Code
+            </button>
+          </div>
+        )}
       </footer>
 
       {/* Lock Session Confirmation Dialog */}

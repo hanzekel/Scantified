@@ -63,3 +63,19 @@ _Avoid_: Offline buffer, pending upload
 **Attendance Matrix**:
 A tabular representation of attendance across all elapsed sessions with members as rows and session dates as columns.
 _Avoid_: Attendance sheet, roll book
+
+**Attendee Mode**:
+The focused mobile interface for participants showing their digital pass, check-in actions, and attendance history without administrative controls.
+_Avoid_: Public portal, student view
+
+**Coordinator Mode**:
+The management interface for leaders to broadcast the Projector Stage, handle manual overrides, enroll members, and export matrix reports.
+_Avoid_: Admin dashboard, back office
+
+**Digital Pass**:
+An Apple Wallet-styled tactile pass on the attendee's phone representing their verified identity, group membership, and attendance badge.
+_Avoid_: Virtual ID, e-card, member barcode
+
+**Projector Stage**:
+A distraction-free, fullscreen broadcast view designed for sanctuary projectors and TV displays featuring the rotating Session QR and live attendee ticker.
+_Avoid_: Presentation tab, stage display, TV view

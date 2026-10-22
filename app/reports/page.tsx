@@ -195,63 +195,107 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            {/* Table */}
+            {/* Table (Desktop) & Card List (Mobile) */}
             {loading && reportData.length === 0 ? (
               <div className="rounded-3xl border border-amber-200/60 bg-white/80 p-12 text-center backdrop-blur-md">
                 <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-amber-600 border-t-transparent" />
                 <p className="text-sm font-semibold text-slate-700">Connecting live sync...</p>
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-3xl border border-amber-200/60 bg-white/90 shadow-sm backdrop-blur-sm">
-                <table className="w-full text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-amber-200/60 bg-amber-50/50">
-                      <th className="p-3.5 font-bold text-slate-800 uppercase tracking-wider text-[11px]">Attendee</th>
-                      <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Camp / Group</th>
-                      <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Role</th>
-                      <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Status</th>
-                      <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Time Checked In</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-amber-100 font-medium">
-                    {filteredRows.map((row) => (
-                      <tr key={row.id} className="hover:bg-amber-50/30 transition-colors">
-                        <td className="p-3 font-semibold text-slate-900 text-sm">
-                          {row.fullName}
-                        </td>
-                        <td className="p-3 text-slate-600">
-                          <span className="rounded-full bg-amber-100/70 border border-amber-200/80 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+              <>
+                {/* Mobile Cards (Visible below md) */}
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 md:hidden">
+                  {filteredRows.map((row) => (
+                    <div 
+                      key={row.id}
+                      className="rounded-2xl border border-amber-200/70 bg-white/95 p-3.5 shadow-sm"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="block text-sm font-bold text-slate-900">
+                            {row.fullName}
+                          </span>
+                          <span className="mt-0.5 inline-block rounded-full bg-amber-100/70 px-2 py-0.5 text-[10px] font-semibold text-amber-900 border border-amber-200/70">
                             {row.campName}
                           </span>
-                        </td>
-                        <td className="p-3 text-slate-500">{row.role}</td>
-                        <td className="p-3">
-                          {row.status === "Present" ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-800">
-                              <CheckCircle2 size={11} className="text-emerald-600" />
-                              <span>Present</span>
-                            </span>
-                          ) : (
-                            <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-500">
-                              Absent
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 text-slate-500">
-                          {row.timeIn ? (
-                            <span className="flex items-center gap-1">
-                              <Clock size={12} className="text-slate-400" />
-                              <span>{new Date(row.timeIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                            </span>
-                          ) : (
-                            "---"
-                          )}
-                        </td>
+                        </div>
+                        {row.status === "Present" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+                            <CheckCircle2 size={11} className="text-emerald-600" />
+                            <span>Present</span>
+                          </span>
+                        ) : (
+                          <span className="inline-block rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                            Absent
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="mt-2.5 flex items-center justify-between border-t border-amber-100 pt-2 text-[11px] text-slate-500">
+                        <span>Role: {row.role}</span>
+                        {row.timeIn && (
+                          <span className="flex items-center gap-1 text-slate-600 font-medium">
+                            <Clock size={11} className="text-emerald-600" />
+                            <span>{new Date(row.timeIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table (Hidden on small mobile) */}
+                <div className="hidden md:block overflow-x-auto rounded-3xl border border-amber-200/60 bg-white/90 shadow-sm backdrop-blur-sm">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-amber-200/60 bg-amber-50/50">
+                        <th className="p-3.5 font-bold text-slate-800 uppercase tracking-wider text-[11px]">Attendee</th>
+                        <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Camp / Group</th>
+                        <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Role</th>
+                        <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Status</th>
+                        <th className="p-3.5 font-bold text-slate-700 uppercase tracking-wider text-[11px]">Time Checked In</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-amber-100 font-medium">
+                      {filteredRows.map((row) => (
+                        <tr key={row.id} className="hover:bg-amber-50/30 transition-colors">
+                          <td className="p-3 font-semibold text-slate-900 text-sm">
+                            {row.fullName}
+                          </td>
+                          <td className="p-3 text-slate-600">
+                            <span className="rounded-full bg-amber-100/70 border border-amber-200/80 px-2 py-0.5 text-[10px] font-semibold text-amber-900">
+                              {row.campName}
+                            </span>
+                          </td>
+                          <td className="p-3 text-slate-500">{row.role}</td>
+                          <td className="p-3">
+                            {row.status === "Present" ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-800">
+                                <CheckCircle2 size={11} className="text-emerald-600" />
+                                <span>Present</span>
+                              </span>
+                            ) : (
+                              <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                                Absent
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3 text-slate-500">
+                            {row.timeIn ? (
+                              <span className="flex items-center gap-1">
+                                <Clock size={12} className="text-slate-400" />
+                                <span>{new Date(row.timeIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                              </span>
+                            ) : (
+                              "---"
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}

@@ -470,12 +470,22 @@ function CheckInContent() {
             Phone linked! Next time you scan the screen, you check in with just 1 tap.
           </p>
 
-          <button
-            onClick={() => setCheckInResult(null)}
-            className="mt-6 w-full rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 py-3.5 text-sm font-semibold text-white shadow-lg shadow-amber-700/20 hover:from-amber-700 hover:to-amber-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all"
-          >
-            Done
-          </button>
+          <div className="mt-6 flex flex-col gap-2">
+            <button
+              onClick={() => setCheckInResult(null)}
+              className="w-full rounded-2xl bg-gradient-to-r from-amber-600 to-amber-700 py-3 text-xs font-semibold text-white shadow-md shadow-amber-700/20 hover:from-amber-700 hover:to-amber-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all"
+            >
+              Done
+            </button>
+
+            <a
+              href="/register"
+              className="flex w-full items-center justify-center gap-1.5 rounded-2xl border border-amber-200/80 bg-white py-2 text-xs font-semibold text-amber-900 hover:bg-amber-50 hover:-translate-y-0.5 active:scale-95 transition-all"
+            >
+              <span>View My Digital Pass</span>
+              <ChevronRight size={13} />
+            </a>
+          </div>
         </motion.div>
       </main>
     );

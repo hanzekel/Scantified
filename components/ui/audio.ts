@@ -1,7 +1,25 @@
 // Web Audio API synthesizer for clean, instant tactile check-in chime without external audio files
 
+export function isAudioMuted(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return localStorage.getItem("scantified_audio_muted") === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function setAudioMuted(muted: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("scantified_audio_muted", muted ? "true" : "false");
+    window.dispatchEvent(new Event("scantified_audio_muted_changed"));
+  } catch {}
+}
+
 export function playCelebrationChime() {
   if (typeof window === "undefined") return;
+  if (isAudioMuted()) return;
 
   try {
     const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;

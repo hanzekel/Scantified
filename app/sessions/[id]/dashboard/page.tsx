@@ -329,126 +329,136 @@ export default function CoordinatorLiveDashboard() {
           </div>
         </div>
 
-        {/* Member List Cards */}
-        <div className="divide-y divide-amber-100 rounded-3xl border border-amber-200/60 bg-white/90 shadow-sm overflow-hidden backdrop-blur-sm">
-          {filteredRoster.length === 0 ? (
-            <div className="p-8 text-center text-xs font-medium text-slate-500">
-              No people found matching this search.
-            </div>
-          ) : (
-            filteredRoster.map((member) => {
+        {/* Member List as iOS Contact Cards */}
+        {filteredRoster.length === 0 ? (
+          <div className="rounded-3xl border border-amber-200/60 bg-white/90 p-8 text-center text-xs font-medium text-slate-500 shadow-sm">
+            No people found matching this search.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredRoster.map((member) => {
               const isBusy = isUpdating === member.id;
 
               return (
                 <div
                   key={member.id}
-                  className={`flex flex-col justify-between gap-3 p-4 transition-all sm:flex-row sm:items-center ${
+                  className={`flex flex-col justify-between rounded-2xl border p-4 shadow-sm transition-all hover:-translate-y-0.5 ${
                     member.status === "PRESENT"
-                      ? "bg-emerald-50/25"
+                      ? "border-emerald-300/80 bg-emerald-50/20"
                       : member.status === "EXCUSED"
-                      ? "bg-amber-50/30"
-                      : "hover:bg-amber-50/15"
+                      ? "border-amber-300/80 bg-amber-50/25"
+                      : "border-amber-200/70 bg-white/95"
                   }`}
                 >
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-100/70 text-xs font-bold text-amber-900 border border-amber-200/60">
-                      {getInitials(member.fullName)}
+                  <div>
+                    {/* Contact Header: Avatar + Name + Status */}
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-amber-100/70 text-xs font-bold text-amber-900 border border-amber-200/70 shadow-inner">
+                        {getInitials(member.fullName)}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="truncate text-sm font-bold text-slate-900">
+                            {member.fullName}
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-semibold flex-shrink-0 ${
+                              member.status === "PRESENT"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                : member.status === "EXCUSED"
+                                ? "bg-amber-100 text-amber-900 border border-amber-200"
+                                : "bg-slate-100 text-slate-600 border border-slate-200"
+                            }`}
+                          >
+                            {member.status === "PRESENT" ? "Present" : member.status === "EXCUSED" ? "Excused" : "Absent"}
+                          </span>
+                        </div>
+
+                        <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                          <span className="truncate">{member.campName}</span>
+                          {member.role === "Guest" && (
+                            <span className="rounded-full bg-amber-100/80 px-1.5 py-0.2 text-[9px] font-bold text-amber-800">
+                              Guest
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-sm font-bold text-slate-900">
-                          {member.fullName}
+                    {/* Metadata Subline */}
+                    <div className="mt-2 text-[11px] text-slate-500 min-h-[1.25rem]">
+                      {member.timeIn ? (
+                        <span className="flex items-center gap-1 text-slate-600">
+                          <Clock size={11} className="text-emerald-600" />
+                          <span>
+                            Arrived{" "}
+                            {new Date(member.timeIn).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         </span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            member.status === "PRESENT"
-                              ? "bg-emerald-100 text-emerald-800"
-                              : member.status === "EXCUSED"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-slate-100 text-slate-600"
-                          }`}
-                        >
-                          {member.status === "PRESENT" ? "Present" : member.status === "EXCUSED" ? "Excused" : "Absent"}
+                      ) : member.notes ? (
+                        <span className="italic text-amber-800">
+                          Reason: {member.notes}
                         </span>
-                        {member.role === "Guest" && (
-                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                            Guest
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 font-medium">
-                        <span>{member.campName}</span>
-                        {member.timeIn && (
-                          <>
-                            <span>•</span>
-                            <span className="text-slate-600">
-                              Checked in:{" "}
-                              {new Date(member.timeIn).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
-                          </>
-                        )}
-                        {member.source && (
-                          <span className="text-[10px] uppercase text-slate-400">
-                            ({member.source === "QR_SCAN" ? "Scanned Code" : "Manual"})
-                          </span>
-                        )}
-                        {member.notes && (
-                          <span className="text-[11px] text-amber-800 font-medium italic">
-                            Reason: {member.notes}
-                          </span>
-                        )}
-                      </div>
+                      ) : (
+                        <span className="text-slate-400">Not checked in</span>
+                      )}
                     </div>
                   </div>
 
-                  {/* 1-Tap Override Action Buttons with Apple Tactile Feedback */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {member.status !== "PRESENT" && (
-                      <button
-                        onClick={() => handleToggleStatus(member.id, "PRESENT")}
-                        disabled={isBusy}
-                        className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50"
-                      >
-                        <UserCheck size={14} />
-                        <span>Present</span>
-                      </button>
-                    )}
+                  {/* 1-Tap iOS Segmented Status Pill */}
+                  <div className="mt-3.5 flex items-center gap-1 rounded-xl border border-amber-200/70 bg-[#FAF8F5] p-1">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(member.id, "PRESENT")}
+                      disabled={isBusy}
+                      className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-all ${
+                        member.status === "PRESENT"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-slate-600 hover:text-emerald-700 hover:bg-emerald-50"
+                      }`}
+                    >
+                      Present
+                    </button>
 
-                    {member.status !== "EXCUSED" && (
-                      <button
-                        onClick={() => {
-                          setExcuseModalMember(member);
-                          setExcusePreset("Sick");
-                          setCustomReason("");
-                        }}
-                        disabled={isBusy}
-                        className="rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-50 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50"
-                      >
-                        Excuse
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExcuseModalMember(member);
+                        setExcusePreset("Sick");
+                        setCustomReason("");
+                      }}
+                      disabled={isBusy}
+                      className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-all ${
+                        member.status === "EXCUSED"
+                          ? "bg-amber-600 text-white shadow-sm"
+                          : "text-slate-600 hover:text-amber-800 hover:bg-amber-50"
+                      }`}
+                    >
+                      Excuse
+                    </button>
 
-                    {member.status !== "ABSENT" && (
-                      <button
-                        onClick={() => handleToggleStatus(member.id, "ABSENT")}
-                        disabled={isBusy}
-                        className="rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-400 hover:text-rose-600 hover:bg-rose-50 hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-50"
-                        title="Reset to Absent"
-                      >
-                        Reset
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(member.id, "ABSENT")}
+                      disabled={isBusy}
+                      className={`flex-1 rounded-lg py-1.5 text-[11px] font-bold transition-all ${
+                        member.status === "ABSENT"
+                          ? "bg-slate-200 text-slate-700 shadow-sm"
+                          : "text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                      }`}
+                    >
+                      Reset
+                    </button>
                   </div>
                 </div>
               );
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
 
         {/* Excuse Reason Dialog */}
         <Dialog

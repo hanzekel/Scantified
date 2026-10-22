@@ -1,6 +1,8 @@
+// app/api/sessions/[id]/records/route.ts
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import type { AttendanceRecord } from "@prisma/client";
 
 const overrideRecordSchema = z.object({
   memberId: z.number().int().positive(),
@@ -17,7 +19,7 @@ export async function GET(
     const sessionId = parseInt(id, 10);
 
     if (isNaN(sessionId)) {
-      return NextResponse.json({ error: "Invalid session ID" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid session ID", code: "INVALID_ID" }, { status: 400 });
     }
 
     const session = await prisma.eventSession.findUnique({
@@ -33,7 +35,7 @@ export async function GET(
     });
 
     if (!session) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+      return NextResponse.json({ error: "Session not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
     // Determine target cohort members
@@ -133,7 +135,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Member not found" }, { status: 404 });
     }
 
-    let recordResult: any = null;
+    let recordResult: AttendanceRecord | null = null;
 
     if (status === "ABSENT") {
       // Remove any existing attendance record

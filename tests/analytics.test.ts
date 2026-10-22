@@ -86,5 +86,64 @@ console.log("🏃 Running Event Analytics & Matrix Export Tests...\n");
   console.log("✅ Passed: Excel spreadsheet buffer generation and parsing verified\n");
 }
 
+// Test 3: Mid-season joiner grading fairness
+{
+  console.log("Test 3: Mid-season joiner grading fairness (Spec L27)");
+  const sessions: SessionSummary[] = [
+    { id: 1, title: "Day 1 Service", date: new Date("2026-10-01"), sessionType: "Plenary", status: "CONCLUDED" },
+    { id: 2, title: "Day 2 Service", date: new Date("2026-10-02"), sessionType: "Plenary", status: "CONCLUDED" },
+    { id: 3, title: "Day 3 Service", date: new Date("2026-10-03"), sessionType: "Plenary", status: "CONCLUDED" },
+  ];
+
+  const members = [
+    // Joined before event
+    { id: 201, fullName: "Early Member", campName: "Alpha", role: "Camper", createdAt: new Date("2026-09-25") },
+    // Joined on Day 2 of event (mid-season)
+    { id: 202, fullName: "Mid-Season Joiner", campName: "Beta", role: "Camper", createdAt: new Date("2026-10-02") },
+  ];
+
+  const records = [
+    { sessionId: 1, memberId: 201, status: "PRESENT" },
+    { sessionId: 2, memberId: 201, status: "PRESENT" },
+    { sessionId: 3, memberId: 201, status: "PRESENT" },
+
+    // Mid-season joiner attends Day 2 and Day 3
+    { sessionId: 2, memberId: 202, status: "PRESENT" },
+    { sessionId: 3, memberId: 202, status: "PRESENT" },
+  ];
+
+  const result = calculateEventAnalytics(sessions, members, records);
+  const midSeason = result.allMembers.find((m) => m.memberId === 202)!;
+
+  // Mid-season joiner Day 1 should be N/A, applicable should be 2, rate should be 100%
+  assert(midSeason.sessionStatuses[1] === "N/A", "Day 1 should be N/A for mid-season joiner");
+  assert(midSeason.applicableCount === 2, `Mid-season applicable should be 2, got ${midSeason.applicableCount}`);
+  assert(midSeason.rate === 100, `Mid-season rate should be 100%, got ${midSeason.rate}%`);
+  console.log("✅ Passed: Mid-season joiner graded fairly on attended applicable sessions\n");
+}
+
+// Test 4: Premature elapsed check for SCHEDULED sessions today
+{
+  console.log("Test 4: SCHEDULED sessions today not counted as elapsed prematurely");
+  const testNow = new Date("2026-10-15T10:00:00Z").getTime();
+
+  const sessions: SessionSummary[] = [
+    // Yesterday: CONCLUDED -> elapsed
+    { id: 1, title: "Yesterday Plenary", date: new Date("2026-10-14T00:00:00Z"), sessionType: "Plenary", status: "CONCLUDED" },
+    // Today evening: SCHEDULED -> NOT elapsed yet!
+    { id: 2, title: "Tonight Plenary", date: new Date("2026-10-15T00:00:00Z"), sessionType: "Plenary", status: "SCHEDULED" },
+    // Tomorrow: SCHEDULED -> NOT elapsed
+    { id: 3, title: "Tomorrow Plenary", date: new Date("2026-10-16T00:00:00Z"), sessionType: "Plenary", status: "SCHEDULED" },
+  ];
+
+  const members = [{ id: 301, fullName: "Grace", campName: "Alpha", role: "Camper" }];
+  const records = [{ sessionId: 1, memberId: 301, status: "PRESENT" }];
+
+  const result = calculateEventAnalytics(sessions, members, records, testNow);
+  assert(result.summary.elapsedSessions === 1, `Expected 1 elapsed session, got ${result.summary.elapsedSessions}`);
+  assert(!result.sessions.some((s) => s.id === 2), "Tonight's scheduled session should not be elapsed at 10 AM");
+  console.log("✅ Passed: SCHEDULED sessions today not counted as elapsed prematurely\n");
+}
+
 console.log("🎉 ALL ANALYTICS & MATRIX TESTS PASSED SUCCESSFULLY!");
 

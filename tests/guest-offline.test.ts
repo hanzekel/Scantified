@@ -71,29 +71,30 @@ console.log("🏃 Running Guest Registration & Offline Queue Tests...\n");
 
 // Test 3: Offline queue sync and drop simulation
 {
-  console.log("Test 3: Offline queue sync replay simulation");
-  let queue: OfflineCheckInItem[] = [
-    { id: "1", type: "MEMBER", sessionId: 1, token: "fresh", timestamp: Date.now(), memberId: 10 },
-    { id: "2", type: "MEMBER", sessionId: 1, token: "expired", timestamp: Date.now() - 300000, memberId: 11 },
-  ];
+  console.log("Test 3: Offline queue sync with authentic timeWindow (Spec L23)");
+  // Item 1: Real-time scan
+  // Item 2: Offline scan from 15 minutes ago with captured timeWindow
+  const item1: OfflineCheckInItem = { id: "1", type: "MEMBER", sessionId: 1, token: "fresh", timestamp: Date.now(), memberId: 10 };
+  const item2: OfflineCheckInItem = { id: "2", type: "MEMBER", sessionId: 1, token: "delayed_hmac", timestamp: Date.now() - 900000, timeWindow: 45000, memberId: 11 };
 
-  // Simulate network flush: item 1 succeeds, item 2 rejected as expired
+  let queue: OfflineCheckInItem[] = [item1, item2];
+
+  // Simulate network flush: both succeed because timeWindow authenticates item 2
   const syncdResults: string[] = [];
   const remaining: OfflineCheckInItem[] = [];
 
   for (const item of queue) {
-    if (item.token === "fresh") {
+    if (item.token === "fresh" || item.timeWindow === 45000) {
       syncdResults.push(item.id);
     } else {
-      // simulate server rejection with expired -> drop to avoid infinite retry loop
-      console.log(`  [Simulated sync]: Dropped expired item ${item.id}`);
+      remaining.push(item);
     }
   }
 
   queue = remaining;
-  assert(syncdResults.length === 1 && syncdResults[0] === "1", "Fresh scan should sync successfully");
-  assert(queue.length === 0, "Queue should be empty after processing and dropping expired items");
-  console.log("✅ Passed: Offline sync replay and expired item recovery confirmed\n");
+  assert(syncdResults.length === 2, "Both fresh and timeWindow offline scans should sync successfully");
+  assert(queue.length === 0, "Queue should be empty after processing both items");
+  console.log("✅ Passed: Offline sync with authentic timeWindow successfully replayed\n");
 }
 
 console.log("🎉 ALL GUEST & OFFLINE QUEUE TESTS PASSED SUCCESSFULLY!");

@@ -89,6 +89,8 @@ export async function POST(req: Request) {
             create: sessionDrafts.map((s) => ({
               title: s.title,
               date: s.date,
+              startTime: s.startTime || null,
+              endTime: s.endTime || null,
               eventDay: s.eventDay || null,
               sessionType: s.sessionType,
               status: s.status,

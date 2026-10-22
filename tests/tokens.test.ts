@@ -69,5 +69,36 @@ console.log("🏃 Running Rotating QR Token Tests...\n");
   console.log("✅ Passed: Expired token rejected beyond grace window\n");
 }
 
+// Test 5: Offline token verification with authentic timeWindow
+{
+  console.log("Test 5: Authentic offline token verification with timeWindow (Spec L23)");
+  const sessionId = 88;
+  const secret = "offline-test-salt-456";
+
+  // Simulate token generated 30 minutes ago (90 windows ago)
+  const pastWindow = Math.floor(Date.now() / (TOKEN_WINDOW_SECONDS * 1000)) - 90;
+  const crypto = require("crypto");
+  const pastToken = crypto.createHmac("sha256", secret).update(`${sessionId}:${pastWindow}`).digest("hex").slice(0, 16);
+
+  // Without timeWindow (real-time check), it rejects
+  const realtimeCheck = verifySessionToken(sessionId, pastToken, secret);
+  assert(realtimeCheck.valid === false, "Should fail real-time check");
+
+  // With timeWindow, it verifies the authentic HMAC
+  const offlineCheck = verifySessionToken(sessionId, pastToken, secret, {
+    timeWindow: pastWindow,
+    maxOfflineHours: 24,
+  });
+  assert(offlineCheck.valid === true, `Offline check should be valid, got: ${offlineCheck.reason}`);
+
+  // Tampered offline timeWindow should reject
+  const badOfflineCheck = verifySessionToken(sessionId, pastToken, secret, {
+    timeWindow: pastWindow + 1,
+    maxOfflineHours: 24,
+  });
+  assert(badOfflineCheck.valid === false, "Mismatched timeWindow must reject");
+  console.log("✅ Passed: Authentic offline token verified with valid timeWindow\n");
+}
+
 console.log("🎉 ALL TOKEN TESTS PASSED SUCCESSFULLY!");
 

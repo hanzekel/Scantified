@@ -1,18 +1,28 @@
-export interface OfflineCheckInItem {
+// lib/offline-queue.ts
+
+export interface BaseOfflineItem {
   id: string;
-  type: "MEMBER" | "GUEST";
   sessionId: number;
   token: string;
   timestamp: number;
-  // For MEMBER
-  memberId?: number;
+  timeWindow?: number;
+}
+
+export interface MemberOfflineCheckIn extends BaseOfflineItem {
+  type: "MEMBER";
+  memberId: number;
   pairingToken?: string;
   phoneNumberDigits?: string;
-  // For GUEST
-  fullName?: string;
+}
+
+export interface GuestOfflineCheckIn extends BaseOfflineItem {
+  type: "GUEST";
+  fullName: string;
   phoneNumber?: string;
   notes?: string;
 }
+
+export type OfflineCheckInItem = MemberOfflineCheckIn | GuestOfflineCheckIn;
 
 const STORAGE_KEY = "scantified_offline_queue";
 
@@ -36,12 +46,16 @@ export function saveOfflineQueue(items: OfflineCheckInItem[]): void {
   }
 }
 
-export function enqueueOfflineCheckIn(item: Omit<OfflineCheckInItem, "id" | "timestamp">): OfflineCheckInItem {
-  const fullItem: OfflineCheckInItem = {
+export function enqueueOfflineCheckIn(
+  item: 
+    | (Omit<MemberOfflineCheckIn, "id" | "timestamp">)
+    | (Omit<GuestOfflineCheckIn, "id" | "timestamp">)
+): OfflineCheckInItem {
+  const fullItem = {
     ...item,
     id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `offline_${Date.now()}_${Math.random()}`,
     timestamp: Date.now(),
-  };
+  } as OfflineCheckInItem;
 
   const queue = getOfflineQueue();
   queue.push(fullItem);
@@ -67,6 +81,7 @@ export async function flushOfflineQueue(): Promise<{ synced: number; failed: num
           body: JSON.stringify({
             sessionId: item.sessionId,
             token: item.token,
+            timeWindow: item.timeWindow,
             memberId: item.memberId,
             pairingToken: item.pairingToken,
             phoneNumberDigits: item.phoneNumberDigits,
@@ -76,25 +91,27 @@ export async function flushOfflineQueue(): Promise<{ synced: number; failed: num
         if (res.ok) {
           synced++;
         } else {
-          // If server rejects with 400 (e.g. expired beyond grace), drop to avoid infinite retry loop
           const data = await res.json().catch(() => ({}));
-          if (res.status === 400 && data.error?.includes("expired")) {
-            console.warn("Dropping expired offline scan:", item.id);
+          // Only drop if fundamentally invalid (e.g. member deleted), NOT for offline delays
+          if (res.status === 404 || res.status === 401) {
+            console.warn("Dropping invalid offline scan:", item.id, data.error);
           } else {
             remaining.push(item);
             failed++;
           }
         }
       } else if (item.type === "GUEST") {
-        const res = await fetch("/api/sessions/guest", {
+        // Can use either /api/sessions/checkin or /api/sessions/guest
+        const res = await fetch("/api/sessions/checkin", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             sessionId: item.sessionId,
             token: item.token,
-            fullName: item.fullName,
-            phoneNumber: item.phoneNumber,
-            notes: item.notes,
+            timeWindow: item.timeWindow,
+            guestName: item.fullName,
+            guestPhone: item.phoneNumber,
+            guestNotes: item.notes,
           }),
         });
 
@@ -106,7 +123,7 @@ export async function flushOfflineQueue(): Promise<{ synced: number; failed: num
         }
       }
     } catch (networkErr) {
-      // Still offline, retain item
+      // Still offline, retain in queue
       remaining.push(item);
       failed++;
     }
@@ -116,3 +133,50 @@ export async function flushOfflineQueue(): Promise<{ synced: number; failed: num
   return { synced, failed };
 }
 
+/**
+ * Exponential backoff sync manager
+ */
+export function startOfflineSyncManager(onSync?: (synced: number) => void): () => void {
+  if (typeof window === "undefined") return () => {};
+
+  let currentDelay = 5000; // 5s initial
+  const MAX_DELAY = 60000; // 60s cap
+  let timerId: NodeJS.Timeout | null = null;
+  let isActive = true;
+
+  async function attemptSync() {
+    if (!isActive) return;
+
+    try {
+      const result = await flushOfflineQueue();
+      if (result.synced > 0) {
+        currentDelay = 5000; // Reset to 5s on success
+        if (onSync) onSync(result.synced);
+      } else if (result.failed > 0) {
+        currentDelay = Math.min(currentDelay * 2, MAX_DELAY); // Exponential backoff on failure
+      }
+    } catch {
+      currentDelay = Math.min(currentDelay * 2, MAX_DELAY);
+    }
+
+    if (isActive) {
+      timerId = setTimeout(attemptSync, currentDelay);
+    }
+  }
+
+  // Trigger immediately on network reconnect
+  function handleOnline() {
+    currentDelay = 5000;
+    if (timerId) clearTimeout(timerId);
+    attemptSync();
+  }
+
+  window.addEventListener("online", handleOnline);
+  attemptSync();
+
+  return () => {
+    isActive = false;
+    if (timerId) clearTimeout(timerId);
+    window.removeEventListener("online", handleOnline);
+  };
+}

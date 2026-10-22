@@ -51,12 +51,15 @@ export async function GET(
         date: s.date,
         sessionType: s.sessionType,
         status: s.status,
+        startTime: s.startTime,
+        endTime: s.endTime,
       })),
       members.map((m) => ({
         id: m.id,
         fullName: m.fullName,
         campName: m.camp?.name || "General Roster",
         role: m.role,
+        createdAt: m.createdAt,
       })),
       records
     );

@@ -1,3 +1,4 @@
+// components/app-navbar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -119,9 +120,16 @@ export default function AppNavbar() {
           <div className="flex items-center gap-2">
             
             {/* Segmented Role Switcher */}
-            <div className="flex items-center rounded-2xl border border-amber-200/70 bg-amber-50/50 p-0.5 shadow-sm">
+            <div 
+              role="tablist" 
+              aria-label="Application View Mode"
+              className="flex items-center rounded-2xl border border-amber-200/70 bg-amber-50/50 p-0.5 shadow-sm"
+            >
               <button
                 type="button"
+                role="tab"
+                aria-selected={role === "attendee"}
+                aria-label="Switch to Attendee Mode"
                 onClick={() => handleRoleChange("attendee")}
                 className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold transition-all ${
                   role === "attendee"
@@ -136,6 +144,9 @@ export default function AppNavbar() {
 
               <button
                 type="button"
+                role="tab"
+                aria-selected={role === "staff"}
+                aria-label="Switch to Staff Coordinator Mode"
                 onClick={() => handleRoleChange("staff")}
                 className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1 text-xs font-semibold transition-all ${
                   role === "staff"

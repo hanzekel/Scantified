@@ -1,3 +1,4 @@
+// app/api/events/[id]/analytics/route.ts
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { calculateEventAnalytics } from "@/lib/analytics";
@@ -11,7 +12,7 @@ export async function GET(
     const eventId = parseInt(id, 10);
 
     if (isNaN(eventId)) {
-      return NextResponse.json({ error: "Invalid event ID" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid event ID", code: "INVALID_ID" }, { status: 400 });
     }
 
     const event = await prisma.event.findUnique({
@@ -25,7 +26,7 @@ export async function GET(
     });
 
     if (!event) {
-      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      return NextResponse.json({ error: "Event not found", code: "NOT_FOUND" }, { status: 404 });
     }
 
     // Fetch members assigned to this cohort (or all active members if general event)
@@ -58,12 +59,15 @@ export async function GET(
         date: s.date,
         sessionType: s.sessionType,
         status: s.status,
+        startTime: s.startTime,
+        endTime: s.endTime,
       })),
       members.map((m) => ({
         id: m.id,
         fullName: m.fullName,
         campName: m.camp?.name || "General Roster",
         role: m.role,
+        createdAt: m.createdAt,
       })),
       records
     );
@@ -81,7 +85,7 @@ export async function GET(
   } catch (error) {
     console.error("GET /api/events/[id]/analytics error:", error);
     return NextResponse.json(
-      { error: "Failed to generate event analytics" },
+      { error: "Failed to generate event analytics", code: "INTERNAL_ERROR" },
       { status: 500 }
     );
   }

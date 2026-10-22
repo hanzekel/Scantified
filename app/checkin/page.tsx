@@ -1,3 +1,4 @@
+// app/checkin/page.tsx
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -20,7 +21,7 @@ import {
   ChevronRight,
   Heart,
 } from "lucide-react";
-import { enqueueOfflineCheckIn, flushOfflineQueue, getOfflineQueue } from "@/lib/offline-queue";
+import { enqueueOfflineCheckIn, flushOfflineQueue, getOfflineQueue, startOfflineSyncManager } from "@/lib/offline-queue";
 import { playCelebrationChime } from "@/components/ui/audio";
 import { useToast } from "@/components/ui/toast";
 
@@ -44,6 +45,8 @@ function CheckInContent() {
   const searchParams = useSearchParams();
   const sessionIdStr = searchParams.get("sessionId");
   const token = searchParams.get("token") || "";
+  const tsStr = searchParams.get("ts");
+  const timeWindow = tsStr ? parseInt(tsStr, 10) : undefined;
   const sessionId = sessionIdStr ? parseInt(sessionIdStr, 10) : null;
   const toast = useToast();
 
@@ -86,21 +89,14 @@ function CheckInContent() {
       console.error("Failed to read pairing from localStorage", e);
     }
 
-    async function handleSync() {
-      const result = await flushOfflineQueue();
-      if (result.synced > 0) {
-        setPendingSyncCount(getOfflineQueue().length);
-        toast.info(`Synced ${result.synced} offline check-ins!`);
-      }
-    }
-
-    handleSync();
-    window.addEventListener("online", handleSync);
-    const interval = setInterval(handleSync, 10000);
+    // Start robust offline sync manager with exponential backoff
+    const stopSyncManager = startOfflineSyncManager((synced) => {
+      setPendingSyncCount(getOfflineQueue().length);
+      toast.info(`Synced ${synced} offline check-in${synced > 1 ? "s" : ""}!`);
+    });
 
     return () => {
-      window.removeEventListener("online", handleSync);
-      clearInterval(interval);
+      stopSyncManager();
     };
   }, [toast]);
 
@@ -142,6 +138,7 @@ function CheckInContent() {
     interface CheckInPayload {
       sessionId: number;
       token: string;
+      timeWindow?: number;
       memberId: number;
       pairingToken?: string;
       phoneNumberDigits?: string;
@@ -150,6 +147,7 @@ function CheckInContent() {
     const payload: CheckInPayload = {
       sessionId,
       token,
+      timeWindow,
       memberId: memberIdToUse,
     };
 
@@ -164,6 +162,7 @@ function CheckInContent() {
         type: "MEMBER",
         sessionId,
         token,
+        timeWindow,
         memberId: memberIdToUse,
         pairingToken: payload.pairingToken,
         phoneNumberDigits: payload.phoneNumberDigits,
@@ -221,6 +220,7 @@ function CheckInContent() {
         type: "MEMBER",
         sessionId,
         token,
+        timeWindow,
         memberId: memberIdToUse,
         pairingToken: payload.pairingToken,
         phoneNumberDigits: payload.phoneNumberDigits,
@@ -257,6 +257,7 @@ function CheckInContent() {
         type: "GUEST",
         sessionId,
         token,
+        timeWindow,
         fullName: guestName.trim(),
         phoneNumber: guestPhone.trim(),
         notes: guestNotes.trim(),
@@ -277,15 +278,16 @@ function CheckInContent() {
     }
 
     try {
-      const res = await fetch("/api/sessions/guest", {
+      const res = await fetch("/api/sessions/checkin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
           token,
-          fullName: guestName.trim(),
-          phoneNumber: guestPhone.trim(),
-          notes: guestNotes.trim(),
+          timeWindow,
+          guestName: guestName.trim(),
+          guestPhone: guestPhone.trim(),
+          guestNotes: guestNotes.trim(),
         }),
       });
 
@@ -319,6 +321,7 @@ function CheckInContent() {
         type: "GUEST",
         sessionId,
         token,
+        timeWindow,
         fullName: guestName.trim(),
         phoneNumber: guestPhone.trim(),
         notes: guestNotes.trim(),

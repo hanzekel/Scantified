@@ -1,0 +1,75 @@
+-- Migration: Add Event, ScheduleRule, and EventSession models, and update Member/AttendanceRecord
+-- Run this in your Supabase SQL Editor if needed:
+
+-- 1. Alter Member table if missing new columns
+ALTER TABLE IF EXISTS "Member" 
+  ADD COLUMN IF NOT EXISTS "phoneNumber" TEXT,
+  ADD COLUMN IF NOT EXISTS "pairingToken" TEXT,
+  ADD COLUMN IF NOT EXISTS "isActive" BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE IF EXISTS "Member" ALTER COLUMN "qrCode" DROP NOT NULL;
+
+-- 2. Create Event Table
+CREATE TABLE IF NOT EXISTS "Event" (
+  "id" SERIAL PRIMARY KEY,
+  "title" TEXT NOT NULL,
+  "description" TEXT,
+  "eventType" TEXT NOT NULL DEFAULT 'RECURRING',
+  "campId" INTEGER REFERENCES "Camp"("id") ON DELETE SET NULL,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Create ScheduleRule Table
+CREATE TABLE IF NOT EXISTS "ScheduleRule" (
+  "id" SERIAL PRIMARY KEY,
+  "eventId" INTEGER NOT NULL UNIQUE REFERENCES "Event"("id") ON DELETE CASCADE,
+  "ruleType" TEXT NOT NULL,
+  "startDate" TIMESTAMP(3) NOT NULL,
+  "endDate" TIMESTAMP(3) NOT NULL,
+  "daysOfWeek" TEXT,
+  "startTime" TEXT,
+  "endTime" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 4. Alter or Create EventSession Table
+CREATE TABLE IF NOT EXISTS "EventSession" (
+  "id" SERIAL PRIMARY KEY,
+  "eventId" INTEGER REFERENCES "Event"("id") ON DELETE CASCADE,
+  "title" TEXT NOT NULL,
+  "eventDay" INTEGER,
+  "sessionType" TEXT NOT NULL DEFAULT 'Plenary',
+  "date" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "startTime" TIMESTAMP(3),
+  "endTime" TIMESTAMP(3),
+  "status" TEXT NOT NULL DEFAULT 'SCHEDULED',
+  "qrSecret" TEXT,
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE IF EXISTS "EventSession" 
+  ADD COLUMN IF NOT EXISTS "eventId" INTEGER REFERENCES "Event"("id") ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS "startTime" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "endTime" TIMESTAMP(3),
+  ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'SCHEDULED',
+  ADD COLUMN IF NOT EXISTS "qrSecret" TEXT;
+
+-- 5. Alter or Create AttendanceRecord Table
+CREATE TABLE IF NOT EXISTS "AttendanceRecord" (
+  "id" SERIAL PRIMARY KEY,
+  "sessionId" INTEGER NOT NULL REFERENCES "EventSession"("id") ON DELETE CASCADE,
+  "memberId" INTEGER NOT NULL REFERENCES "Member"("id") ON DELETE CASCADE,
+  "status" TEXT NOT NULL DEFAULT 'PRESENT',
+  "notes" TEXT,
+  "source" TEXT NOT NULL DEFAULT 'SELF_SCAN',
+  "timeIn" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "AttendanceRecord_sessionId_memberId_key" UNIQUE ("sessionId", "memberId")
+);
+
+ALTER TABLE IF EXISTS "AttendanceRecord"
+  ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'PRESENT',
+  ADD COLUMN IF NOT EXISTS "notes" TEXT,
+  ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'SELF_SCAN';
